@@ -1,0 +1,25 @@
+language: generic
+
+sudo: required
+
+services:
+  - docker
+
+before_install:
+  - docker build -t foderation/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true forderation/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t forderation/multi-client ./client
+  - docker build -t forderation/multi-nginx ./nginx
+  - docker build -t forderation/multi-server ./server
+  - docker build -t forderation/multi-worker ./worker
+  # docker login cli
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # take those images and push them to docker hub
+  - docker push forderation/multi-client
+  - docker push forderation/multi-nginx
+  - docker push forderation/multi-server
+  - docker push forderation/multi-worker
